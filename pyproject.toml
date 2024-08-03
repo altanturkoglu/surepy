@@ -41,7 +41,7 @@ isort = "^5.9.3"
 mypy = "^0.910"
 pycodestyle = "^2.6.0"
 pylint = "^2.10.2"
-pytest = "^6.2.1"
+pytest = "^8.3.2"
 pytest-cov = "^2.12.1"
 
 [tool.poetry.scripts]
