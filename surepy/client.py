@@ -57,6 +57,9 @@ TOKEN_FILE = Path("~/.surepy.token").expanduser()
 # get a logger
 logger: Logger = logging.getLogger(__name__)
 
+# set logger to debug
+logger.setLevel(logging.DEBUG)
+
 
 def token_seems_valid(token: str) -> bool:
     """check validity of an api token based on its characters and length
@@ -144,16 +147,17 @@ class SureAPIClient:
         return {
             HOST: "app.api.surehub.io",
             CONNECTION: "keep-alive",
-            CONTENT_TYPE: CONTENT_TYPE_JSON,
             ACCEPT: f"{CONTENT_TYPE_JSON}, {CONTENT_TYPE_TEXT_PLAIN}, */*",
-            ORIGIN: "https://surepetcare.io",
-            USER_AGENT: user_agent if user_agent else SUREPY_USER_AGENT,
-            REFERER: "https://surepetcare.io",
             ACCEPT_ENCODING: "gzip, deflate",
             ACCEPT_LANGUAGE: "en-US,en-GB;q=0.9",
+            CONTENT_TYPE: CONTENT_TYPE_JSON,
+            ORIGIN: "https://surepetcare.io",
+            REFERER: "https://surepetcare.io",
+            # USER_AGENT: user_agent if user_agent else SUREPY_USER_AGENT,
             HTTP_HEADER_X_REQUESTED_WITH: "com.sureflap.surepetcare",
-            AUTHORIZATION: f"Bearer {self._auth_token}",
-            "X-Device-Id": self._device_id,
+            # "X-Device-Id": self._device_id,
+            "X-Device-Id": str(uuid1()),
+            AUTHORIZATION: f"Bearer {self._auth_token}"
         }
 
     async def get_token(self) -> str | None:
@@ -240,9 +244,21 @@ class SureAPIClient:
                     # logger.debug("🐾 \x1b[38;2;255;26;102m·\x1b[0m etag: %s", headers[ETAG])
 
                 await session.options(resource, headers=headers)
-                response: aiohttp.ClientResponse = await session.request(
-                    method, resource, headers=headers, json=data
-                )
+
+                print(method)
+                print(resource)
+                print(data)
+
+                if method == "PUT":
+                    response: aiohttp.ClientResponse = await session.put(
+                        resource, headers=headers, json=data
+                    )
+                else:
+                    response: aiohttp.ClientResponse = await session.request(
+                        method, resource, headers=headers, json=data
+                    )
+
+                print(response)
 
                 if response.status == HTTPStatus.OK or response.status == HTTPStatus.CREATED:
                     self.resources[resource] = response_data = await response.json()
@@ -411,16 +427,18 @@ class SureAPIClient:
         # return None
         raise SurePetcareError("ERROR SETTING CURFEW - PLEASE CHECK IMMEDIATELY!")
 
-    async def _add_tag_to_device(self, device_id: int, tag_id: int) -> dict[str, Any] | None:
+    async def add_tag_to_device(self, device_id: int, tag_id: int) -> dict[str, Any] | None:
         """Add the specified tag ID to the specified device ID"""
         resource = DEVICE_TAG_RESOURCE.format(
             BASE_RESOURCE=BASE_RESOURCE, device_id=device_id, tag_id=tag_id
         )
 
-        if response := await self.call(method="PUT", resource=resource):
+        response = await self.call(method="PUT", resource=resource, data={})
+
+        if response:
             return response
 
-    async def _remove_tag_from_device(self, device_id: int, tag_id: int) -> dict[str, Any] | None:
+    async def remove_tag_from_device(self, device_id: int, tag_id: int) -> dict[str, Any] | None:
         """Removes the specified tag ID from the specified device ID"""
         resource = DEVICE_TAG_RESOURCE.format(
             BASE_RESOURCE=BASE_RESOURCE, device_id=device_id, tag_id=tag_id
