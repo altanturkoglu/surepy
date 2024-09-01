@@ -382,7 +382,11 @@ class Surepy:
             elif entity_type == EntityType.HUB:
                 surepy_entities[entity_id] = Hub(data=entity)
             elif entity_type == EntityType.PET:
-                surepy_entities[entity_id] = Pet(data=entity)
+                pet_log = await self.get_report(
+                    household_id=entity["household_id"],
+                    pet_id=entity_id
+                )
+                surepy_entities[entity_id] = Pet(data=entity, log=pet_log)
 
             else:
                 logger.warning(
