@@ -193,10 +193,10 @@ async def pets(ctx: click.Context, token: str | None) -> None:
             feeding_a = feeding_b = lunch_time = None
             drinking_change = drink_time = None
 
-            if pet.feeding:
-                feeding_a = f"{pet.feeding.change[0]}g"
-                feeding_b = f"{pet.feeding.change[1]}g"
-                lunch_time = pet.feeding.at.time() if pet.feeding.at else None
+            # if pet.feeding:
+            #     feeding_a = f"{pet.feeding.change[0]}g"
+            #     feeding_b = f"{pet.feeding.change[1]}g"
+            #     lunch_time = pet.feeding.at.time() if pet.feeding.at else None
             if pet.drinking:
                 drinking_change = f"{pet.drinking.change[0]}ml"
                 drink_time = pet.drinking.at.time() if pet.drinking.at else None
@@ -568,16 +568,16 @@ async def feederassign(ctx: click.Context, device_id: int, mode: str, pet_id: in
                 if pet.id == pet_id:
                     for tag in feeder.tags.values():
                         if tag.id == pet.tag_id:
-                            console.print(f"Pet is already assigned to this feeder.")
+                            console.print("Pet is already assigned to this feeder.")
                             return
-                    if await sp.sac._add_tag_to_device(device_id=device_id, tag_id=pet.tag_id):
+                    if await sp.sac.add_tag_to_device(device_id=device_id, tag_id=pet.tag_id):
                         console.print(f"✅ {pet.name} added to '{feeder.name}' 🐾")
         if mode == "remove":
             for pet in pets:
                 if pet.id == pet_id:
                     for tag in feeder.tags.values():
                         if tag.id == pet.tag_id:
-                            if await sp.sac._remove_tag_from_device(device_id=device_id, tag_id=pet.tag_id):
+                            if await sp.sac.remove_tag_from_device(device_id=device_id, tag_id=pet.tag_id):
                                 console.print(f"✅ {pet.name} removed from '{feeder.name}' 🐾")
                                 return
                     console.print("Pet is not assigned to this feeder.")
