@@ -30,17 +30,19 @@ class Pet(SurepyEntity):
 
     """
 
-    def __init__(self, data: dict[str, Any]):
+    def __init__(self, data: dict[str, Any], log: dict[str, Any] | None = None) -> None:
 
         super().__init__(data=data)
 
+        self._type: EntityType = EntityType.PET
         self.pet_id: int = int(data["id"])
 
-        self._type: EntityType = EntityType.PET
         self._data: dict[str, Any] = data
 
-        self._name = str(name) if (name := self._data.get("name")) else "Unnamed"
+        if log:
+            self._data["log"] = log
 
+        self._name = str(name) if (name := self._data.get("name")) else "Unnamed"
         self.state = PetState(data["status"]) if "status" in data else "Unknown"
 
     @property
@@ -80,6 +82,11 @@ class Pet(SurepyEntity):
         return urlparse(picture_url).geturl()
 
     @property
+    def weight(self) -> int | None:
+        """Weight of the Pet."""
+        return int(weight) if (weight := self._data.get("weight")) else None
+
+    @property
     def at_home(self) -> bool:
         """Location of the Pet."""
         return bool(self.location.where == Location.INSIDE)
@@ -104,8 +111,14 @@ class Pet(SurepyEntity):
             since=activity.get("since", None),
         )
 
+
     @property
-    def feeding(self) -> StateFeeding | None:
+    def feed_logs(self) -> dict:
+        """Return feeding activity logs of the pet."""
+        return self._data.get("log", {}).get("data", {})
+
+    @property
+    def last_lunch(self) -> StateFeeding | None:
         """Last Activity of the Pet."""
         if activity := self._data.get("status", {}).get("feeding", {}):
             return StateFeeding(
@@ -125,10 +138,6 @@ class Pet(SurepyEntity):
             )
 
         return None
-
-    @property
-    def last_lunch(self) -> datetime | None:
-        return self.feeding.at if self.feeding else None
 
     @property
     def last_drink(self) -> datetime | None:
